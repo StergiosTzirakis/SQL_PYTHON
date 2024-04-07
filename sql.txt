@@ -1,0 +1,109 @@
+#1115202100092 - Χρύσανθος Μανδελενάκης
+#1115201900188 - Στέργιος Τζιράκης
+#1
+SELECT DISTINCT e.name, e.surname
+FROM travel_guide_has_languages tl, travel_guide t, guided_tour gt, tourist_attraction ta, destination d, employees e
+WHERE tl.travel_guide_employee_AM = t.travel_guide_employee_AM
+	AND gt.travel_guide_employee_AM = t.travel_guide_employee_AM
+	AND gt.tourist_attraction_id = ta.tourist_attraction_id
+	AND ta.destination_destination_id = d.destination_id
+	AND d.country = 'Germany'
+	AND e.employees_AM=t.travel_guide_employee_AM
+ORDER BY e.name;
+#2
+SELECT gt.travel_guide_employee_AM, COUNT(gt.travel_guide_employee_AM) AS number_of_guided_tours
+FROM guided_tour gt, trip_package tp
+WHERE gt.trip_package_id = tp.trip_package_id
+	AND tp.trip_start >= '2019-01-01'
+	AND tp.trip_start <= '2019-12-31'
+GROUP BY gt.travel_guide_employee_AM
+HAVING COUNT(gt.travel_guide_employee_AM) > 3;
+#3
+SELECT tab.travel_agency_branch_id, COUNT(e.employees_AM) AS number_of_travel_guides
+FROM travel_agency_branch tab, employees e
+WHERE tab.travel_agency_branch_id = e.travel_agency_branch_travel_agency_branch_id
+GROUP BY tab.travel_agency_branch_id
+ORDER BY tab.travel_agency_branch_id;
+#4
+SELECT tp.trip_package_id, COUNT(r.Reservation_id) AS number_of_reservations
+FROM trip_package tp, reservation r, trip_package_has_destination td, destination d
+WHERE tp.trip_package_id = td.trip_package_trip_package_id
+	AND td.destination_destination_id = d.destination_id
+	AND d.name = 'Paris'
+	AND r.offer_trip_package_id = tp.trip_package_id
+	AND tp.trip_start >= '2021-01-01' AND tp.trip_end <= '2021-12-31'
+GROUP BY tp.trip_package_id
+ORDER BY tp.trip_package_id;
+#5
+SELECT DISTINCT e.name, e.surname
+FROM employees e, travel_guide tg, travel_guide_has_languages tgl, guided_tour gt
+WHERE e.employees_AM = tg.travel_guide_employee_AM
+	AND gt.travel_guide_employee_AM = tg.travel_guide_employee_AM
+	AND tg.travel_guide_employee_AM = tgl.travel_guide_employee_AM
+    AND tgl.travel_guide_employee_AM IN (
+		SELECT tgl2.travel_guide_employee_AM
+        FROM travel_guide_has_languages tgl2
+        WHERE tgl2.travel_guide_employee_AM = tgl.travel_guide_employee_AM
+			AND tgl2.languages_id <> tgl.languages_id
+	)
+GROUP BY tg.travel_guide_employee_AM
+HAVING COUNT(DISTINCT gt.travel_guide_language_id) = 1; 
+#6
+SELECT DISTINCT 'yes' AS answer
+FROM offer
+WHERE offer.offer_id NOT IN (
+  SELECT offer_id
+  FROM reservation
+)
+UNION
+SELECT DISTINCT 'no' AS answer
+FROM offer
+WHERE offer.offer_id IN (
+  SELECT offer_id
+  FROM reservation
+);
+#7
+SELECT t.name, t.surname
+FROM traveler t
+WHERE t.gender = 'male' AND t.age >= 2040
+	AND (
+		SELECT COUNT(DISTINCT r.offer_trip_package_id)
+		FROM reservation r
+		WHERE r.Customer_id = t.traveler_id
+	) > 3;
+#8
+SELECT tg.travel_guide_employee_AM, e.name, e.surname, COUNT(tp.trip_package_id) AS number_of_attractions
+FROM travel_guide tg, travel_guide_has_languages tl, languages l, guided_tour gt, trip_package tp, employees e
+WHERE tg.travel_guide_employee_AM = tl.travel_guide_employee_AM
+	AND tl.languages_id = l.languages_id
+	AND l.name = 'English'
+	AND tg.travel_guide_employee_AM = gt.travel_guide_employee_AM
+	AND gt.trip_package_id = tp.trip_package_id
+    AND e.employees_AM = tg.travel_guide_employee_AM
+	AND gt.travel_guide_language_id = l.languages_id
+GROUP BY tg.travel_guide_employee_AM
+ORDER BY tg.travel_guide_employee_AM;
+#9
+SELECT de.country
+FROM destination de
+WHERE (
+    SELECT COUNT(*) package_count
+    FROM trip_package_has_destination td
+    WHERE td.destination_destination_id = de.destination_id
+    GROUP BY td.destination_destination_id
+) = (
+    SELECT MAX(counts.package_count)
+    FROM (
+        SELECT COUNT(*) package_count
+        FROM trip_package_has_destination
+        GROUP BY destination_destination_id
+    ) counts
+);
+#10
+SELECT DISTINCT tp.trip_package_id
+FROM trip_package tp, trip_package_has_destination td, destination d
+WHERE tp.trip_package_id = td.trip_package_trip_package_id
+	AND td.destination_destination_id = d.destination_id
+	AND d.country = 'Ireland'
+GROUP BY tp.trip_package_id
+HAVING COUNT(DISTINCT d.destination_id) = 5;
